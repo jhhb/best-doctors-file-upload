@@ -24,6 +24,9 @@
             </apex:pageBlockSection>
         </apex:pageBlock>
     </apex:form>
+    <apex:form >
+        <apex:commandButton value="Test File Extensions" action="{!testValidateExtensions}"/>
+    </apex:form>
     <button type="button" id="run-tests-button">Run Javascript Tests</button>
     <div id="container"></div>
 
