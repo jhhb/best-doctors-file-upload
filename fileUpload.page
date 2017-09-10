@@ -1,0 +1,112 @@
+<apex:page controller="FileUploadController">
+    <head>
+        <!-- loads jQuery -->
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+            integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+            crossorigin="anonymous">
+        </script>
+    </head>
+    
+    <apex:sectionHeader title="File Upload" subtitle="You can upload any file you like...as long as it is .png, .docx, .doc, or .pdf"/>
+    <apex:form enctype="multipart/form-data">
+        <apex:pageMessages />
+        <apex:pageBlock title="Upload a File">
+            <apex:commandButton action="{!upload}" id="save-button" value="Save"/>
+            <apex:pageBlockSection showHeader="false" columns="1" id="block1">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="File" for="file"/>
+                    <apex:inputFile id="file" value="{!document.body}" filename="{!document.name}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Description" for="description"/>
+                    <apex:inputTextarea value="{!document.description}" id="description"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    <button type="button" id="run-tests-button">Run Javascript Tests</button>
+    <div id="container"></div>
+
+    <script type="text/javascript">
+        $(document).on("ready", function(){
+            initializeListeners();
+
+            function initializeListeners() {
+                $("#run-tests-button").on("click", function() {
+                    // I defined one separate from VALID_EXTENSIONS below because
+                    // I didn't want to use a single var globally. 
+                    var VALID_TEST_EXTENSIONS = [".png", ".doc", ".docx", ".pdf"];
+                    var testResults = filenameIsValidTest(VALID_TEST_EXTENSIONS);
+                    $("#container").append(testResults);            
+                });
+
+                // Used this gross selector syntax because I was not sure
+                // about the way of selecting on elements since
+                // apex prepends to the id based on page layout
+                $("input[id$=file]").on("change", function() {
+                    // defined locally and used as a
+                    // function parameter because I would rather be explicit about
+                    // what is being passed into my functions
+                    var VALID_EXTENSIONS = [".png",".doc",".docx",".pdf"];
+                    var filenameInput = $(this)[0];
+                    var valueOfFilename = filenameInput.value;
+                    var validFilename = filenameIsValid(valueOfFilename, VALID_EXTENSIONS);
+                    if(!validFilename) {
+                        handleFilenameErrors(validFilename, filenameInput);
+                    }
+                });
+            }
+            // Determines that the file matches a valid extension
+            function filenameIsValid(filename, extensions) {
+                for(var j = 0; j < extensions.length; j++) {        
+                    // filename !== extensions[j] prevents '.jpg' from being valid
+                    if(filename.endsWith(extensions[j]) && filename !== extensions[j]) {
+                        return true;
+                    }   
+                }
+                return false;
+            };
+
+            // The below function tests the filenameIsValid function.
+            // The reason there is so much gross looking code is because I thought
+            // It would be better to give the viewers the option of viewing the test results
+            // on the page rather than having to just do it in a console.log or
+            // executing the test code every time you run a function.
+            function filenameIsValidTest(extensions) {
+                var FILENAMES = [".png", ".doc", "foo.doc", "foo.docx", "bar.png", 
+                                "bar.pdf", "baz.jpg", "hello.webm", ".jpg"];
+                var EXPECTED_RESULTS = [false, false, true, true, true, true, false, false, false];
+                var htmlResults = '';
+                var htmlHeader = getHTMLHeader(FILENAMES, EXPECTED_RESULTS);
+                
+                for(var i = 0; i < FILENAMES.length; i++) {
+                    validState = filenameIsValid(FILENAMES[i], extensions);
+                    htmlResults += buildHTMLResults(validState, EXPECTED_RESULTS[i]);
+                }
+                return htmlHeader + htmlResults;
+            }
+
+            // I didn't want this clogging the main part of the code, so I separated it
+            function getHTMLHeader(filenames, expectedResults) {
+                var htmlHeader = "<h2>Given:</h2>";
+                htmlHeader += "<p>" + filenames.toString() + "</p>";
+                htmlHeader += "<h2>Expecting:</h2>";
+                htmlHeader += "<p>" + expectedResults.toString() + "</p>";
+                return htmlHeader;
+            }
+            // Similar to the above, this function just wraps the HTML string construction.
+            function buildHTMLResults(validState, expectedResult) {
+                // === has higher precedence than = 
+                var htmlResults = validState === expectedResult ? "<h3>Pass</h3>" : "<h3>Fail</h3>";
+                htmlResults += "<ul><li>GOT: " + validState + "</li>" 
+                            + "<li>EXPECTED: " + expectedResult + "</li></ul>";
+                return htmlResults;
+            } 
+
+            function handleFilenameErrors(validFilename, filenameInput) {
+                alert("File must be .png, .doc, .docx, or .pdf!");
+                filenameInput.value = '';
+            }
+        })
+    </script>
+</apex:page>
