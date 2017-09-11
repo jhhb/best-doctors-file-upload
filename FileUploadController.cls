@@ -44,6 +44,10 @@ public class FileUploadController {
             ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR, this.uploadErrorMessage));
             return;    
         } 
+        finally {
+            document.body = null; // needed to not exceed viewstate size
+            document = new Document();
+        }
         
         ApexPages.addMessage(new ApexPages.message(ApexPages.severity.INFO, this.uploadSuccessMessage));
         return;
